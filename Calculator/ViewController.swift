@@ -12,6 +12,8 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var display: UILabel!
     
+    @IBOutlet weak var actions: UILabel!
+    
     var userInTheMiddleOfTyping: Bool = false
     
     @IBAction func touchDigit(_ sender: UIButton) {
