@@ -12,31 +12,31 @@ struct CalculatorBrain{
     
     private var accumulator: Double?
     private var pendingBinaryOperation: PendingBinaryOperation?
-    private var takenActions: String?
+    private var displayAccumulator: String?
     
     private enum Operation
     {
-        case constant(Double)
-        case unaryOperation((Double) -> Double)
-        case binaryOperation((Double,Double) -> Double)
+        case constant(Double, String)
+        case unaryOperation((Double) -> Double, (String) -> String)
+        case binaryOperation((Double,Double) -> Double, (String,String) -> String)
         case equals
         case clear
     }
     
     private var operations: Dictionary<String, Operation> = [
-        "π" : Operation.constant(Double.pi),
-        "e" : Operation.constant(M_E),
-        "√" : Operation.unaryOperation(sqrt),
-        "cos" : Operation.unaryOperation(cos),
-        "sin" : Operation.unaryOperation(sin),
-        "tan" : Operation.unaryOperation(tan),
-        "ln" : Operation.unaryOperation(log2),
-        "±" :  Operation.unaryOperation({ -$0 }),
-        "pow" : Operation.binaryOperation(pow),
-        "x" : Operation.binaryOperation({ $0 * $1 }),
-        "÷" : Operation.binaryOperation({ $0 / $1 }),
-        "−" : Operation.binaryOperation({ $0 - $1 }),
-        "+" : Operation.binaryOperation({ $0 + $1 }),
+        "π" : Operation.constant(Double.pi, "π"),
+        "e" : Operation.constant(M_E, "e"),
+        "√" : Operation.unaryOperation(sqrt, { "√(\($0))"}),
+        "cos" : Operation.unaryOperation(cos, {"cos(\($0))"}),
+        "sin" : Operation.unaryOperation(sin, {"sin(\($0))"}),
+        "tan" : Operation.unaryOperation(tan, {"tan(\($0)"}),
+        "ln" : Operation.unaryOperation(log2, {"ln(\($0))"}),
+        "±" :  Operation.unaryOperation({ -$0 }, {"-(\($0))"}),
+        "pow" : Operation.binaryOperation(pow, {"\($0) pow \($1)"}),
+        "x" : Operation.binaryOperation({ $0 * $1 }, {"\($0) x \($1)"}),
+        "÷" : Operation.binaryOperation({ $0 / $1 }, {"\($0) ÷ \($1)"}),
+        "−" : Operation.binaryOperation({ $0 - $1 }, {"\($0) - \($1)"}),
+        "+" : Operation.binaryOperation({ $0 + $1 }, {"\($0) + \($1)"}),
         "=" : Operation.equals,
         "c" : Operation.clear
     ]
@@ -46,19 +46,24 @@ struct CalculatorBrain{
         if let operation = operations[symbol]
         {
             switch operation {
-            case .constant(let value):
+            case .constant(let value, let displayValue):
                 accumulator = value
-            case .unaryOperation(let function):
+                if pendingBinaryOperation == nil {
+                    displayAccumulator = displayValue
+                }
+            case .unaryOperation(let function, let displayFunction):
                 if accumulator != nil
                 {
                     accumulator = function(accumulator!)
+                    displayAccumulator = displayFunction(displayAccumulator!)
                 }
-            case .binaryOperation(let function):
+            case .binaryOperation(let function, let displayFunction):
                 if accumulator != nil
                 {
                     performPendingBinaryOperation()
                     pendingBinaryOperation = PendingBinaryOperation(function: function, firstOperand: accumulator!)
                     accumulator = nil
+                    displayAccumulator = displayFunction(displayAccumulator!, "")
                 }
             case .equals:
                 performPendingBinaryOperation()
@@ -70,6 +75,9 @@ struct CalculatorBrain{
     
     mutating func setOperand(_ operand: Double)
     {
+        if pendingBinaryOperation == nil {
+            displayAccumulator = String(operand)
+        }
         accumulator = operand
     }
     
@@ -77,13 +85,14 @@ struct CalculatorBrain{
     {
         pendingBinaryOperation = nil
         accumulator = 0
-        takenActions = nil
+        displayAccumulator = nil
     }
     
     private mutating func performPendingBinaryOperation()
     {
         if pendingBinaryOperation != nil
         {
+            displayAccumulator = "\(displayAccumulator!)\(accumulator!)"
             accumulator = pendingBinaryOperation!.perform(with: accumulator!)
             pendingBinaryOperation = nil
         }
@@ -112,6 +121,6 @@ struct CalculatorBrain{
     
     var description: String?
     {
-        get { return takenActions }
+        get { return displayAccumulator ?? ""}
     }
 }

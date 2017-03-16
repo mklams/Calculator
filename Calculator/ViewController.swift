@@ -16,9 +16,12 @@ class ViewController: UIViewController {
     
     var userInTheMiddleOfTyping: Bool = false
     
-    @IBAction func touchDigit(_ sender: UIButton) {
+    @IBAction func touchDigit(_ sender: UIButton)
+    {
         let digit = sender.currentTitle!
-        if userInTheMiddleOfTyping {
+        
+        if userInTheMiddleOfTyping
+        {
             let textCurrentlyInDisplay = display.text!
             
             if !(textCurrentlyInDisplay.contains(".") && digit == ".")
@@ -41,29 +44,69 @@ class ViewController: UIViewController {
         
     }
     
-    var displayValue: Double {
-        get{
-            return Double(display.text!)!
+    @IBAction func backspace(_ sender: UIButton)
+    {
+        if userInTheMiddleOfTyping
+        {
+            let textInDisplay = display.text!
+            display.text = textInDisplay.substring(to: (textInDisplay.index(before: textInDisplay.endIndex)))
         }
-        set{
-            display.text = String(newValue)
+    }
+    
+    var displayValue: Double
+    {
+        get { return Double(display.text!)! }
+        
+        set { display.text = String(newValue) }
+    }
+    
+    var historyValue: String
+    {
+        get { return actions.text! }
+        
+        set
+        {
+            if !userInTheMiddleOfTyping
+            {
+                if newValue == ""
+                {
+                    actions.text = " "
+                }
+                else if brain.resultIsPending
+                {
+                    actions.text = newValue + " ..."
+                }
+                else
+                {
+                    actions.text = newValue + " ="
+                }
+            }
         }
     }
     
     private var brain: CalculatorBrain = CalculatorBrain()
     
-    @IBAction func performOperation(_ sender: UIButton) {
-        if userInTheMiddleOfTyping {
+    @IBAction func performOperation(_ sender: UIButton)
+    {
+        if userInTheMiddleOfTyping
+        {
             brain.setOperand(displayValue)
             userInTheMiddleOfTyping = false
         }
         
-        if let mathamaticalSymbol = sender.currentTitle {
+        if let mathamaticalSymbol = sender.currentTitle
+        {
             brain.performOperation(mathamaticalSymbol)
         }
         
-        if let result = brain.result {
+        if let result = brain.result
+        {
             displayValue = result
+        }
+        
+        if let operations = brain.description
+        {
+           historyValue = operations
         }
     }
 }
